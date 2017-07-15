@@ -8,11 +8,11 @@ var Chatterbox = function() {
 Chatterbox.prototype.init = function() {
   var context = this;
   $(document).ready(function() {
-    // $('send').on('click'), app.handleSubmit();
-    // $('main').on('click'), app.handleUsernameClick();
-    $('#send').on('click', function() {
-      context.handleSubmit();
-    });
+    $('#send').on('click'), app.handleSubmit();
+    $('main').on('click'), app.handleUsernameClick();
+    //$('#send').on('click', function() {
+    //   context.handleSubmit();
+    // });
     $('#roomSelect').on('click', function() {
       context.renderRoom();
     });
@@ -31,7 +31,7 @@ Chatterbox.prototype.send = function(message) {
     contentType: 'application/json',
     success: function (data) {
       console.log('chatterbox: Message sent');
-    
+      app.fetch();
     },
     error: function (data) {
       // See: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -47,7 +47,7 @@ Chatterbox.prototype.fetch = function(message) {
     data: JSON.stringify(message),
     dataType: 'json',
     success: function (data) {
-      console.log('chatterbox: data received: ' + data.responseText);
+      console.log('chatterbox: data received: ');
       window.app.currentMsgs = data.results;
       window.app.renderAllMessages();
     },
@@ -55,6 +55,7 @@ Chatterbox.prototype.fetch = function(message) {
       console.error('chatterbox: Failed: data not received', data);
     }
   });
+  this.currentMsgs.sort(this.currentMsgs.createdAt);
 };
 
 Chatterbox.prototype.clearMessages = function() {
@@ -65,11 +66,13 @@ Chatterbox.prototype.renderMessage = function(message) {
   var $child = document.createElement('div');
 
   var username = message.username;
-  if (username.includes('-') || username.includes('<') || username.includes('>') || username.includes('&') || username.includes('"')) {
-    username = 'invalid name';
-  } else {
-    if (app.friends.includes(message.username)) {
-      username = '<b>' + username + '</b>';
+  if (username !== undefined) {
+    if (username.includes('-') || username.includes('<') || username.includes('>') || username.includes('&') || username.includes('"')) {
+      username = 'invalid name';
+    } else {
+      if (app.friends.includes(message.username)) {
+        username = '<b>' + username + '</b>';
+      }
     }
   }
 
@@ -104,8 +107,10 @@ Chatterbox.prototype.renderRoom = function(roomName) {
 };
 
 Chatterbox.prototype.handleUsernameClick = function(friendName) {
-  if (!this.friends.includes(friendName)) {
-    this.friends.push(friendName);
+  if (friendName !== undefined) {
+    if (!this.friends.includes(friendName)) {
+      this.friends.push(friendName);
+    }
   }
 };
 
@@ -113,7 +118,8 @@ Chatterbox.prototype.handleSubmit = function(message) {
   var msgObject = {
     username: this.username,
     text: document.getElementById('message').value,
-    roomname: $('#roomSelect').find(':selected').text()
+    roomname: $('#roomSelect').find(':selected').text(),
+    //createdAt: Date.now()
   };
   this.renderMessage(msgObject);
   this.send(msgObject);
