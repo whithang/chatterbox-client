@@ -3,18 +3,22 @@ var Chatterbox = function() {
   this.username = $(document)[0].URL.split('=')[1];
   this.currentMsgs;
   this.friends = [];
+  this.currentRoom;
 };
 
 Chatterbox.prototype.init = function() {
   var context = this;
   $(document).ready(function() {
-    $('#send').on('click'), app.handleSubmit();
+    //$('#send').on('click'), app.handleSubmit;
     $('main').on('click'), app.handleUsernameClick();
-    //$('#send').on('click', function() {
-    //   context.handleSubmit();
-    // });
+    $('#send').on('click', function() {
+      context.handleSubmit();
+    });
     $('#roomSelect').on('click', function() {
       context.renderRoom();
+    });
+    $('#roomSelect').on('change', function() {
+      context.addRoom();
     });
     // $('#chats a').on('click', function() {
     //   context.handleUsernameClick(this.value);
@@ -40,11 +44,15 @@ Chatterbox.prototype.send = function(message) {
   });
 };
 
-Chatterbox.prototype.fetch = function(message) {
+Chatterbox.prototype.fetch = function() {
   $.ajax({
     url: this.server,
     type: 'GET',
-    data: JSON.stringify(message),
+    data: {
+      order: '-createdAt',
+      limit: 100,
+      include: {'roomname': 'Create a New Room'}
+    },
     dataType: 'json',
     success: function (data) {
       console.log('chatterbox: data received: ');
@@ -55,7 +63,6 @@ Chatterbox.prototype.fetch = function(message) {
       console.error('chatterbox: Failed: data not received', data);
     }
   });
-  this.currentMsgs.sort(this.currentMsgs.createdAt);
 };
 
 Chatterbox.prototype.clearMessages = function() {
@@ -83,7 +90,7 @@ Chatterbox.prototype.renderMessage = function(message) {
     }
   }
   
-  $child.innerHTML += '<br><a onClick="app.handleUsernameClick(this.innerText)" href="#">' + username + ': </a>' + '<br>' + messageText + '<br>' + 'Room: ' + message.roomname + 'Time Posted: ' + message.createdAt;
+  $child.innerHTML += '<br><a onClick="app.handleUsernameClick(this.innerText)" href="#">' + username + ': </a>' + '<br>' + messageText + '<br>' + 'Room: ' + message.roomname + '<br>Time Posted: ' + message.createdAt;
   $('#chats').prepend($child);
 };
 
@@ -102,8 +109,21 @@ Chatterbox.prototype.renderRoom = function(roomName) {
     var value = roomName;
     $child.innerHTML += value;
     $child.value = roomName;
-    $('#roomSelect ').append($child);
+    $('#roomSelect').append($child);
   }
+  //$('#roomSelect').find(this.currentRoom);
+  // $('#roomSelect').find('option')[$('#roomSelect').find('option').length - 1].value
+  // how to update the selector parameter of the room?
+  //fetch for only this room of messages
+  $('#roomSelect').val(roomName);
+};
+
+Chatterbox.prototype.addRoom = function() {
+  if ($(roomSelect).context.value === 'Create a New Room') {
+    var roomName = prompt('Enter a new chat room name', 'Create a New Chat Room');
+  }
+  this.currentRoom = roomName;
+  this.renderRoom(roomName);
 };
 
 Chatterbox.prototype.handleUsernameClick = function(friendName) {
@@ -119,7 +139,6 @@ Chatterbox.prototype.handleSubmit = function(message) {
     username: this.username,
     text: document.getElementById('message').value,
     roomname: $('#roomSelect').find(':selected').text(),
-    //createdAt: Date.now()
   };
   this.renderMessage(msgObject);
   this.send(msgObject);
